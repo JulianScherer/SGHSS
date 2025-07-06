@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SGHSS - Sistema de Gestão Hospitalar</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary-color: #0077cc;
+      --primary-dark: #005fa3;
+      --background-color: #f4f7f9;
+      --text-color: #333;
+      --border-color: #ccc;
+      --success-bg: #e6f2ff;
+      --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      font-family: var(--font-main);
+      background: url('fundo-hospital.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .topbar {
+      height: 50px;
+      background: #fff;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .account-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .account-dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: white;
+      min-width: 160px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 10;
+      border-radius: 6px;
+    }
+    .account-dropdown-content a {
+      color: black;
+      padding: 10px 14px;
+      text-decoration: none;
+      display: block;
+    }
+    .account-dropdown-content a:hover {
+      background-color: var(--background-color);
+    }
+    .account-dropdown:hover .account-dropdown-content {
+      display: block;
+    }
+    .main-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: var(--primary-color);
+      color: #fff;
+      padding: 20px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .sidebar h2 {
+      font-size: 20px;
+      text-align: center;
+      color: #fff;
+    }
+    .sidebar button {
+      background: none;
+      border: none;
+      color: #fff;
+      text-align: left;
+      font-size: 16px;
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background-color 0.2s;
+    }
+    .sidebar button:hover, .sidebar button.active {
+      background-color: var(--primary-dark);
+      border-radius: 6px;
+    }
+    .main {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: rgba(255,255,255,0.95);
+      border-radius: 12px;
+      margin: 10px;
+    }
+    h1, h2 {
+      color: var(--primary-color);
+      margin-bottom: 20px;
+    }
+    .form-group { margin-bottom: 15px; }
+    .card { margin-bottom: 15px; }
+
+    /* Estilos da Tela de Login */
+    .login-screen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: url('fundo-hospital.jpg') no-repeat center center;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    .login-box {
+      background: #fff;
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      max-width: 400px;
+      width: 100%;
+    }
+    .login-box h2 { text-align: center; }
+
+    /* Estilos para novas seções */
+    .mensagem, .resumo {
+        margin-top: 16px;
+        background-color: var(--success-bg);
+        padding: 12px;
+        border-left: 5px solid var(--primary-color);
+        border-radius: 8px;
+    }
+    .video-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.4);
+      z-index: 110;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <h2>Login</h2>
+      <form onsubmit="return entrarSistema()">
+        <div class="form-group">
+          <label for="usuario">Usuário</label>
+          <input type="text" class="form-control" id="usuario" required>
+        </div>
+        <div class="form-group">
+          <label for="senha">Senha</label>
+          <input type="password" class="form-control" id="senha" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Entrar</button>
+        <div class="text-center mt-2">
+          <a href="#" onclick="alert('Funcionalidade em desenvolvimento')">Esqueci minha senha</a><br>
+          <a href="#" onclick="alert('Funcionalidade em desenvolvimento')">Criar conta</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="topbar">
+    <div class="account-dropdown">
+      <i class="fas fa-user-circle" style="font-size: 22px; color: var(--primary-color); cursor: pointer;"></i>
+      <div class="account-dropdown-content" id="accountMenu">
+        <a href="#" onclick="toggleLogin()">Entrar</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <div class="sidebar">
+      <h2>SGHSS</h2>
+      <button class="active" onclick="mostrar('dashboard', this)"><i class="fas fa-home"></i> Dashboard</button>
+      <button onclick="mostrar('cadastro', this)"><i class="fas fa-user-plus"></i> Pacientes</button>
+      <button onclick="mostrar('agendamento', this)"><i class="fas fa-calendar-check"></i> Agendamentos</button>
+      <button onclick="mostrar('profissionais', this)"><i class="fas fa-user-md"></i> Profissionais</button>
+      <button onclick="mostrar('prontuarios', this)"><i class="fas fa-notes-medical"></i> Prontuários</button>
+      <button onclick="mostrar('telemedicina', this)"><i class="fas fa-video"></i> Telemedicina</button>
+      <button onclick="mostrar('relatorios', this)"><i class="fas fa-file-alt"></i> Relatórios</button>
+    </div>
+
+    <div class="main">
+      <div id="dashboard">
+        <h2>Dashboard</h2>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card text-white bg-primary">
+              <div class="card-body">Pacientes: 132</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card text-white bg-success">
+              <div class="card-body">Consultas Hoje: 27</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card text-white bg-warning">
+              <div class="card-body">Profissionais Ativos: 19</div>
+            </div>
+          </div>
+        </div>
+        <canvas id="grafico"></canvas>
+      </div>
+
+      <div id="cadastro" style="display:none">
+        <h2>Cadastro de Paciente</h2>
+        <form onsubmit="return cadastrarPaciente()" class="w-75">
+          <div class="form-group">
+              <label for="nomePaciente">Nome:</label>
+              <input type="text" id="nomePaciente" class="form-control" required>
+          </div>
+          <div class="form-group">
+              <label for="cpfPaciente">CPF:</label>
+              <input type="text" id="cpfPaciente" class="form-control" required pattern="\d{11}" title="Digite 11 números sem pontos ou traços">
+          </div>
+          <div class="form-group">
+              <label for="nascPaciente">Nascimento:</label>
+              <input type="date" id="nascPaciente" class="form-control" required>
+          </div>
+          <div class="form-group">
+              <label for="emailPaciente">Email:</label>
+              <input type="email" id="emailPaciente" class="form-control" required>
+          </div>
+           <div class="form-group">
+              <label for="endPaciente">Endereço:</label>
+              <input type="text" id="endPaciente" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Cadastrar</button>
+        </form>
+        <div class="mensagem" id="msgCadastro" style="display:none"></div>
+      </div>
+
+      <div id="agendamento" style="display:none">
+        <h2>Agendamento de Consulta</h2>
+        <form onsubmit="return agendarConsulta()" class="w-75">
+            <div class="form-group">
+                <label for="nomeAgendamento">Nome do Paciente:</label>
+                <input type="text" id="nomeAgendamento" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="dataAgendamento">Data:</label>
+                <input type="date" id="dataAgendamento" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="horarioAgendamento">Horário:</label>
+                <select id="horarioAgendamento" class="form-select" required>
+                    <option value="">Selecione um horário</option>
+                    <option>08:00</option>
+                    <option>10:00</option>
+                    <option>14:00</option>
+                </select>
+            </div>
+          <button type="submit" class="btn btn-primary">Agendar</button>
+        </form>
+        <div class="resumo" id="resumoAgendamento" style="display:none"></div>
+      </div>
+
+      <div id="profissionais" style="display:none">
+        <h2>Profissionais</h2>
+        <input type="text" class="form-control mb-3" placeholder="Buscar profissional..." onkeyup="filtrar('lista-profissionais', this.value)">
+        <h4>Cardiologia</h4>
+        <div class="list-group mb-3" id="lista-profissionais-cardiologia">
+          <div class="list-group-item">Dr. João Silva - Cardiologista</div>
+          <div class="list-group-item">Dra. Ana Souza - Cardiologista</div>
+        </div>
+        <h4>UTI</h4>
+        <div class="list-group mb-3" id="lista-profissionais-uti">
+          <div class="list-group-item">Enf. Maria Oliveira - UTI</div>
+          <div class="list-group-item">Enf. Marcos Lima - UTI</div>
+        </div>
+        <h4>Pediatria</h4>
+        <div class="list-group mb-3" id="lista-profissionais-pediatria">
+          <div class="list-group-item">Dr. Carlos Pereira - Pediatra</div>
+          <div class="list-group-item">Dra. Paula Dias - Pediatra</div>
+        </div>
+      </div>
+
+      <div id="prontuarios" style="display:none">
+        <h2>Prontuários</h2>
+        <input type="text" class="form-control mb-3" placeholder="Buscar prontuário..." onkeyup="filtrar('lista-prontuarios', this.value)">
+        <div class="list-group" id="lista-prontuarios">
+          <div class="list-group-item">
+            <strong>João Silva</strong><br><small>Consulta: 12/06/2024 - Diagnóstico: Hipertensão</small>
+          </div>
+          <div class="list-group-item">
+            <strong>Maria Oliveira</strong><br><small>Consulta: 18/06/2024 - Diagnóstico: Pneumonia</small>
+          </div>
+          <div class="list-group-item">
+            <strong>Carlos Pereira</strong><br><small>Consulta: 20/06/2024 - Diagnóstico: Alergia alimentar</small>
+          </div>
+        </div>
+      </div>
+
+      <div id="telemedicina" style="display:none">
+        <h2>Telemedicina</h2>
+        <p>Inicie uma consulta por vídeo com um profissional de saúde.</p>
+        <button class="btn btn-success" onclick="abrirVideo()"><i class="fas fa-video"></i> Iniciar Vídeo Consulta</button>
+        <div class="video-modal" id="videoModal">
+          <p>Simulação de vídeo chamada em andamento...</p>
+          <img src="https://i.gifer.com/ZZ5H.gif" alt="video call" width="100">
+          <br><br>
+          <button class="btn btn-danger" onclick="fecharVideo()">Encerrar Chamada</button>
+        </div>
+      </div>
+
+      <div id="relatorios" style="display:none">
+        <h2>Relatórios</h2>
+        <p>Exporte relatórios de atividades do sistema em diferentes formatos:</p>
+        <button class="btn btn-primary" onclick="exportar('PDF')"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+        <button class="btn btn-secondary" onclick="exportar('CSV')"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let usuarioLogado = '';
+
+    function mostrar(secao, el) {
+      document.querySelectorAll('.main > div').forEach(d => d.style.display = 'none');
+      document.getElementById(secao).style.display = 'block';
+      document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function entrarSistema() {
+      usuarioLogado = document.getElementById('usuario').value;
+      if (usuarioLogado.trim() === '') {
+          alert('Por favor, insira um nome de usuário.');
+          return false;
+      }
+      document.getElementById('loginScreen').style.display = 'none';
+      const menu = document.getElementById('accountMenu');
+      menu.innerHTML = `<a href="#">Olá, ${usuarioLogado}</a><a href="#" onclick="logout()">Sair</a>`;
+      return false; // Previne o recarregamento da página
+    }
+
+    function toggleLogin() {
+      document.getElementById('loginScreen').style.display = 'flex';
+    }
+
+    function logout() {
+      location.reload();
+    }
+
+    function cadastrarPaciente() {
+      const msgDiv = document.getElementById('msgCadastro');
+      msgDiv.textContent = 'Paciente cadastrado com sucesso!';
+      msgDiv.style.display = 'block';
+      setTimeout(() => msgDiv.style.display = 'none', 3000); // Esconde a mensagem após 3 segundos
+      document.querySelector("#cadastro form").reset(); // Limpa o formulário
+      return false;
+    }
+
+    function agendarConsulta() {
+      const horario = document.querySelector('#agendamento select').value;
+      if (horario === '14:00') {
+        alert('Horário indisponível. Por favor, escolha outro.');
+        return false;
+      }
+      const resumoDiv = document.getElementById('resumoAgendamento');
+      resumoDiv.textContent = 'Consulta agendada com sucesso!';
+      resumoDiv.style.display = 'block';
+      setTimeout(() => resumoDiv.style.display = 'none', 3000);
+      document.querySelector("#agendamento form").reset();
+      return false;
+    }
+
+    function filtrar(containerId, texto) {
+        const input = texto.toLowerCase();
+        const containers = document.querySelectorAll(`[id^="${containerId}"]`);
+        
+        containers.forEach(container => {
+            const itens = container.querySelectorAll('.list-group-item');
+            itens.forEach(item => {
+                const itemText = item.textContent.toLowerCase();
+                item.style.display = itemText.includes(input) ? 'block' : 'none';
+            });
+        });
+    }
+
+
+    function exportar(tipo) {
+      alert(`Simulando exportação de relatório em formato ${tipo}...`);
+    }
+
+    function abrirVideo() {
+      document.getElementById('videoModal').style.display = 'block';
+    }
+
+    function fecharVideo() {
+      document.getElementById('videoModal').style.display = 'none';
+    }
+
+    // Gráfico do Dashboard
+    const ctx = document.getElementById('grafico');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'],
+        datasets: [{
+          label: 'Consultas por mês',
+          data: [120, 190, 90, 150, 180, 210],
+          backgroundColor: 'rgba(0, 119, 204, 0.6)',
+          borderColor: 'rgba(0, 119, 204, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' },
+          title: { display: true, text: 'Consultas Mensais' }
+        },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  </script>
+</body>
+</html>
